@@ -1,0 +1,87 @@
+rm(list=ls())
+library(foreign)
+library(magrittr)
+library(dplyr)
+library(lme4)
+library(tidyverse)
+setwd(path.expand(""))  # data soure
+
+data_way = read.spss("", to.data.frame=TRUE) # data file with SPSS format
+data_way3 <- data_way[complete.cases(data_way),]  # Clear data file 
+
+#1 for exploring cut-off value for cut-off point of MPRM when dependent variable is academic score
+
+data_way3 <- plyr::rename(data_way3, c(total_score="Y",homework_perday="X")) # define dependent and independent variables 
+try_number <- seq(min(data_way3$X), max(data_way3$X),0.1) # Explore cut-off point with interval 0.1 
+result_PLGM <- matrix(data=NA,ncol=4,nrow=length(try_number)) # Create a new matrix to save result
+colnames(result_PLGM) <- c("cutpoint","adjusted-R-square","AIC","BIC") # Create a new matrix to save result
+for (i in 1:length(try_number)) {
+  cut <- try_number[i]
+  data_way3 <- data_way3 %>% mutate(Part_1 = ifelse(X <= cut,X,cut)) 
+  data_way3 <- data_way3 %>% mutate(Part_2 = ifelse(X <= cut,cut,X))
+  Relationship_PLGM <- lmer(Y~ Part_1 + Part_2 + gender +   ISES + ISLEVE + (1|school_code), data =data_way3,na.action=na.omit)
+  result_PLGM[i,1] <- cut
+  result_PLGM[i,3]  <- AIC(Relationship_PLGM)
+  result_PLGM[i,4]  <- BIC(Relationship_PLGM)
+}
+write.csv(result_PLGM,"1.csv") # output for cut-off point of MPRM
+
+#2 for exploring cut-off value for cut-off point of MPRM when dependent variable is learning interest
+
+data_way3 <- data_way[complete.cases(data_way),]
+data_way3 <- plyr::rename(data_way3, c(INT="Y",homework_perday="X"))
+try_number <- seq(min(data_way3$X), max(data_way3$X),0.1)
+result_PLGM <- matrix(data=NA,ncol=4,nrow=length(try_number))
+colnames(result_PLGM) <- c("cutpoint","adjusted-R-square","AIC","BIC")
+for (i in 1:length(try_number)) {
+  cut <- try_number[i]
+  data_way3 <- data_way3 %>% mutate(Part_1 = ifelse(X <= cut,X,cut)) 
+  data_way3 <- data_way3 %>% mutate(Part_2 = ifelse(X <= cut,cut,X))
+  Relationship_PLGM <- lmer(Y~ Part_1 + Part_2 + gender +   ISES + ISLEVE + (1|school_code), data =data_way3,na.action=na.omit)
+  result_PLGM[i,1] <- cut
+  result_PLGM[i,3]  <- AIC(Relationship_PLGM)
+  result_PLGM[i,4]  <- BIC(Relationship_PLGM)
+}
+write.csv(result_PLGM,"2.csv") # output for cut-off point of MPRM
+
+#3 for exploring cut-off value for cut-off point of MPRM when dependent variable is subjective well-being
+
+data_way3 <- plyr::rename(data_way3, c(HSWB="Y",homework_perday="X"))
+try_number <- seq(min(data_way3$X), max(data_way3$X),0.1)
+result_PLGM <- matrix(data=NA,ncol=4,nrow=length(try_number))
+colnames(result_PLGM) <- c("cutpoint","adjusted-R-square","AIC","BIC")
+for (i in 1:length(try_number)) {
+  cut <- try_number[i]
+  data_way3 <- data_way3 %>% mutate(Part_1 = ifelse(X <= cut,X,cut)) 
+  data_way3 <- data_way3 %>% mutate(Part_2 = ifelse(X <= cut,cut,X))
+  Relationship_PLGM <- lmer(Y~ Part_1 + Part_2 + gender +   ISES + ISLEVE + (1|school_code), data =data_way3,na.action=na.omit)
+  result_PLGM[i,1] <- cut
+  result_PLGM[i,3]  <- AIC(Relationship_PLGM)
+  result_PLGM[i,4]  <- BIC(Relationship_PLGM)
+}
+write.csv(result_PLGM,"3.csv") # output for cut-off point of MPRM
+
+# for esitmate coeficient of MPRM when dependent variable is different
+
+data_way3 <- data_way[complete.cases(data_way),]
+###########################################
+data_way3 <- plyr::rename(data_way3, c(HSWB="Y",homework_perday="X")) # Change "HSWB" when we need to change a dependent variable
+cut <- 1.7  # Change "1.7" when dependent variable is different
+data_way3 <- data_way3 %>% mutate(Part_1 = ifelse(X <= cut,X,cut)) 
+data_way3 <- data_way3 %>% mutate(Part_2 = ifelse(X <= cut,cut,X))
+Relationship_PLGM <- lmer(Y~ Part_1 + Part_2 + gender + ISES + ISLEVE + (1|school_code), data =data_way3,na.action=na.omit)
+summary(Relationship_PLGM)
+
+AIC(Relationship_PLGM)
+BIC(Relationship_PLGM)
+
+# for esitmate coeficient of HLM when dependent variable is different
+
+Relationship_HLM <- lmer(Y~ X + gender +  ISES + ISLEVE + (1|school_code), data =data_way3,na.action=na.omit)
+
+AIC(Relationship_LM)
+BIC(Relationship_LM)
+AIC(Relationship_PW)
+BIC(Relationship_PW)
+AIC(Relationship_HLM)
+BIC(Relationship_HLM)
